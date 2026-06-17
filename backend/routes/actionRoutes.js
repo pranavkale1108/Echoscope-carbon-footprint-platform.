@@ -23,6 +23,7 @@ const getFriendlyErrorMessage = (error) => {
     msg.includes('MongooseServerSelectionError') || 
     msg.includes('MongoNetworkError') ||
     msg.includes('connection timed out') ||
+    msg.includes('buffering timed out') ||
     error.name === 'MongooseServerSelectionError' ||
     error.name === 'MongoNetworkError'
   ) {
