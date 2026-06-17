@@ -55,12 +55,12 @@ export default function App() {
       try {
         const token = localStorage.getItem('echoscope_token');
         const cachedUser = localStorage.getItem('echoscope_user');
-        
+
         if (token && cachedUser) {
           setIdToken(token);
           const parsedUser = JSON.parse(cachedUser);
           setCurrentUser(parsedUser);
-          
+
           if (token === 'mock_bypass_token') {
             setAuthBypassed(true);
             const savedPhase = localStorage.getItem('echoscope_phase');
@@ -70,7 +70,7 @@ export default function App() {
 
           // Verify token against backend
           try {
-            const res = await fetch('http://localhost:5000/api/auth/me', {
+            const res = await fetch('/api/auth/me', {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
@@ -210,9 +210,9 @@ export default function App() {
     switch (phase) {
       case 'AUTH':
         return (
-          <AuthScreen 
-            onAuthSuccess={handleAuthSuccess} 
-            onBypassSuccess={handleBypassSuccess} 
+          <AuthScreen
+            onAuthSuccess={handleAuthSuccess}
+            onBypassSuccess={handleBypassSuccess}
           />
         );
       case 'LANDING':
@@ -225,10 +225,10 @@ export default function App() {
         return <PledgeBuilder initialAnswers={answers} anchor={anchor} onComplete={handlePledgeComplete} />;
       case 'DASHBOARD':
         return (
-          <Dashboard 
-            answers={answers} 
-            activePledgeIds={activePledges} 
-            anchor={anchor} 
+          <Dashboard
+            answers={answers}
+            activePledgeIds={activePledges}
+            anchor={anchor}
             onReset={handleReset}
             idToken={idToken}
           />
@@ -240,7 +240,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative overflow-hidden font-sans">
-      
+
       {/* Decorative Background Glows */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[140px] pointer-events-none" />
@@ -248,8 +248,8 @@ export default function App() {
       {/* Global Header */}
       <header className="w-full border-b border-white/5 bg-slate-950/60 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <button 
-            onClick={phase !== 'AUTH' && phase !== 'LANDING' ? handleReset : undefined} 
+          <button
+            onClick={phase !== 'AUTH' && phase !== 'LANDING' ? handleReset : undefined}
             className="flex items-center gap-2 group cursor-pointer"
             disabled={phase === 'AUTH'}
           >
@@ -292,8 +292,8 @@ export default function App() {
             </div>
           ) : (
             <a
-              href="https://www.un.org/en/climatechange/science/causes-effects-climate-change" 
-              target="_blank" 
+              href="https://www.un.org/en/climatechange/science/causes-effects-climate-change"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
             >
@@ -312,8 +312,8 @@ export default function App() {
       {/* Global Footer */}
       <footer className="w-full py-6 border-t border-white/5 text-center text-xs text-slate-500 relative z-10 bg-slate-950/40">
         <p className="max-w-xl mx-auto leading-relaxed px-4">
-          Echoscope translates individual footprint metrics into immediate ecosystem indicators. 
-          All calculations are modeled on average annualized global offsets. 
+          Echoscope translates individual footprint metrics into immediate ecosystem indicators.
+          All calculations are modeled on average annualized global offsets.
           Make a pledge today to restore the canvas.
         </p>
       </footer>

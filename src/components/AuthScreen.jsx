@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, LogIn, UserPlus, AlertCircle } from 'lucide-react';
 
-const BACKEND_URL = 'http://localhost:5000/api';
+const BACKEND_URL = '/api';
 
 export default function AuthScreen({ onAuthSuccess, onBypassSuccess }) {
   const [isRegister, setIsRegister] = useState(false);
@@ -27,8 +27,8 @@ export default function AuthScreen({ onAuthSuccess, onBypassSuccess }) {
 
     try {
       const endpoint = isRegister ? '/auth/register' : '/auth/login';
-      const body = isRegister 
-        ? { email, password, username } 
+      const body = isRegister
+        ? { email, password, username }
         : { email, password };
 
       const res = await fetch(`${BACKEND_URL}${endpoint}`, {

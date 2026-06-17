@@ -4,7 +4,7 @@ import { calculateFootprint, calculateHealthScore } from '../utils/carbonCalcula
 import EcosystemVisualizer from './EcosystemVisualizer';
 import { Award, Calendar, CheckSquare, RefreshCw, Share2, Sparkles, Trophy, Download, Send, AlertCircle, Shield } from 'lucide-react';
 
-const BACKEND_URL = 'http://localhost:5000/api';
+const BACKEND_URL = '/api';
 
 export default function Dashboard({ answers, activePledgeIds, anchor, onReset, idToken }) {
   // Backend Integration State
@@ -58,11 +58,11 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
 
       try {
         setBackendError(null);
-        
+
         // 1. Get current user profile
         const profileRes = await fetch(`${BACKEND_URL}/auth/me`, {
           method: 'GET',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${idToken}`
           }
@@ -97,7 +97,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
 
   // Core footprint details
   const baseFootprint = calculateFootprint(answers);
-  
+
   // Calculate potential yearly footprint after pledges
   let pledgedReduction = 0;
   activePledgeIds.forEach(id => {
@@ -116,7 +116,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
   // Compute final displays score factoring in custom logged actions
   const customScoreModifier = customLogs.reduce((acc, log) => acc + log.scoreImpact, 0);
   const baseHealthScore = calculateHealthScore(finalFootprint);
-  
+
   const displayScore = Math.max(0, Math.min(100, baseHealthScore + dailyBoost + customScoreModifier));
 
   // Calculate cumulative CO2 prevented (kg)
@@ -128,7 +128,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
     setHabitCheckedState(prev => {
       const newState = { ...prev, [id]: !prev[id] };
       const newCheckedCount = Object.values(newState).filter(Boolean).length;
-      
+
       if (newState[id]) {
         setTotalDaysChecked(d => d + 1);
         if (newCheckedCount === adoptedPledges.length) {
@@ -155,7 +155,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
         // 1. Post to MongoDB + Gemini API
         const res = await fetch(`${BACKEND_URL}/log-action`, {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${idToken}`
           },
@@ -165,7 +165,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
         });
 
         if (!res.ok) throw new Error('API server returned error');
-        
+
         const result = await res.json();
         if (result.success) {
           setCustomLogs(prev => [result.actionLog, ...prev]);
@@ -267,7 +267,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
     ctx.fillStyle = '#94a3b8';
     ctx.font = 'bold 14px "Inter", sans-serif';
     ctx.fillText('RESTORED ENVIRONMENTAL SCORE', 110, 310);
-    
+
     ctx.fillStyle = '#10b981';
     ctx.font = '800 65px "Outfit", sans-serif';
     ctx.fillText(`${displayScore}%`, 110, 385);
@@ -283,7 +283,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
 
     ctx.fillStyle = '#e2e8f0';
     ctx.font = 'italic 16px "Inter", sans-serif';
-    
+
     if (adoptedPledges.length === 0) {
       ctx.fillText('• No commitments selected yet.', 540, 350);
     } else {
@@ -311,7 +311,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 animate-fade-in">
-      
+
       {/* Backend Status Warning */}
       {backendError && (
         <div className="mb-4 bg-amber-500/10 border border-amber-500/20 text-amber-400 p-3 rounded-xl flex items-center gap-2 text-xs">
@@ -339,7 +339,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
             <Download className="w-4 h-4 text-blue-400" />
             Download Pledge Card
           </button>
-          
+
           <button
             onClick={onReset}
             className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 border border-white/5 hover:border-red-500/30 text-slate-400 hover:text-red-400 rounded-xl text-xs font-bold tracking-wider uppercase transition-all cursor-pointer"
@@ -437,7 +437,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
 
         {/* Right Span: Daily Checklist and AI Logger */}
         <div className="lg:col-span-5 space-y-6">
-          
+
           {/* AI Custom Action Logger */}
           <div className="glass-panel p-6 rounded-2xl space-y-4">
             <div>
@@ -486,8 +486,8 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                   Log today's actions to nourish your ecosystem.
                 </span>
               </div>
-              
-              <button 
+
+              <button
                 onClick={handleNewDay}
                 className="text-[10px] font-extrabold uppercase text-slate-400 hover:text-white bg-slate-900 border border-white/5 px-2.5 py-1 rounded"
               >
@@ -513,17 +513,15 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                     <button
                       key={pledge.id}
                       onClick={() => handleToggleHabit(pledge.id)}
-                      className={`w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all ${
-                        isChecked 
-                          ? 'border-emerald-500 bg-emerald-500/5 text-slate-200' 
+                      className={`w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all ${isChecked
+                          ? 'border-emerald-500 bg-emerald-500/5 text-slate-200'
                           : 'border-white/5 bg-slate-900/30 hover:bg-slate-900/60 text-slate-300'
-                      }`}
+                        }`}
                     >
-                      <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-all ${
-                        isChecked 
-                          ? 'bg-emerald-500 border-emerald-500 text-white' 
+                      <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-all ${isChecked
+                          ? 'bg-emerald-500 border-emerald-500 text-white'
                           : 'border-slate-600'
-                      }`}>
+                        }`}>
                         {isChecked && <CheckSquare className="w-3.5 h-3.5" />}
                       </div>
 
@@ -549,7 +547,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                   <span>{checkedCount} / {adoptedPledges.length} Done</span>
                 </div>
                 <div className="w-full h-2 bg-slate-900/60 rounded-full overflow-hidden border border-white/5">
-                  <div 
+                  <div
                     className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
                     style={{ width: `${(checkedCount / adoptedPledges.length) * 100}%` }}
                   />
@@ -570,7 +568,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
               Impact Insight
             </h4>
             <p className="text-slate-300 text-xs font-light leading-relaxed">
-              Every day you check off your commitments, Echoscope updates your cumulative savings. 
+              Every day you check off your commitments, Echoscope updates your cumulative savings.
               Small habits, when maintained, permanently reshape the landscape. Share your Pledge Card with others to inspire collective restoration!
             </p>
           </div>

@@ -1,9 +1,24 @@
-import app from './app.js';
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import serverless from 'serverless-http'; // <-- ADD THIS
+import connectDB from './config/db.js';
+// ... import your routes here
 
-const PORT = process.env.PORT || 5000;
+dotenv.config();
+connectDB();
 
-const server = app.listen(PORT, () => {
-  console.log(`[Server] Echoscope service running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-});
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-export default server;
+// Your routes
+app.use('/api/auth', authRoutes);
+app.use('/api/actions', actionRoutes);
+
+// REMOVE THIS PART:
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// ADD THIS PART INSTEAD:
+export const handler = serverless(app);

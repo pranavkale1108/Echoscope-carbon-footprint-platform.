@@ -1,10 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = "dist" # Or "build", depending on your frontend (Vite = dist)
+  functions = "backend" # Tells Netlify your server files are in the backend folder
+
 [functions]
-  directory = "netlify/functions"
-  external_node_modules = ["express"]
   node_bundler = "esbuild"
 
 [[redirects]]
-  force = true
   from = "/api/*"
+  to = "/.netlify/functions/server/api/:splat" # 'server' matches your server.js filename
   status = 200
-  to = "/.netlify/functions/api/:splat"
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
