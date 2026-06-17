@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import AuthScreen from './components/AuthScreen';
 import EcoAnchorSelector from './components/EcoAnchorSelector';
 import Calculator from './components/Calculator';
 import ResultsSection from './components/ResultsSection';
 import PledgeBuilder from './components/PledgeBuilder';
 import Dashboard from './components/Dashboard';
 import { calculateFootprint } from './utils/carbonCalculator';
-import { Trees, Compass, HelpCircle } from 'lucide-react';
+import { auth, isFirebaseConfigured } from './config/firebase';
+import { Trees, Compass, HelpCircle, LogOut, User } from 'lucide-react';
 
 export default function App() {
-  const [phase, setPhase] = useState(() => {
-    try {
-      return localStorage.getItem('echoscope_phase') || 'LANDING';
-    } catch {
-      return 'LANDING';
-    }
-  });
+  const [phase, setPhase] = useState('AUTH');
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authBypassed, setAuthBypassed] = useState(false);
+  const [idToken, setIdToken] = useState(null);
 
   const [anchor, setAnchor] = useState(() => {
     try {
@@ -51,10 +50,38 @@ export default function App() {
     }
   });
 
+  // Listen for Firebase auth state changes
+  useEffect(() => {
+    if (isFirebaseConfigured && auth) {
+      const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          setCurrentUser(user);
+          const token = await user.getIdToken();
+          setIdToken(token);
+          setAuthBypassed(false);
+          
+          // Restore saved phase or go to Landing
+          const savedPhase = localStorage.getItem('echoscope_phase');
+          setPhase(savedPhase && savedPhase !== 'AUTH' ? savedPhase : 'LANDING');
+        } else {
+          setCurrentUser(null);
+          setIdToken(null);
+          setPhase('AUTH');
+        }
+      });
+      return unsubscribe;
+    } else {
+      // If Firebase is not configured, start at Auth screen for local bypass
+      setPhase('AUTH');
+    }
+  }, []);
+
   // Sync state changes to LocalStorage
   useEffect(() => {
     try {
-      localStorage.setItem('echoscope_phase', phase);
+      if (phase !== 'AUTH') {
+        localStorage.setItem('echoscope_phase', phase);
+      }
       if (anchor) localStorage.setItem('echoscope_anchor', anchor);
       if (answers) localStorage.setItem('echoscope_answers', JSON.stringify(answers));
       if (footprint) localStorage.setItem('echoscope_footprint', footprint.toString());
@@ -63,6 +90,46 @@ export default function App() {
       console.warn("Could not save state to localStorage", e);
     }
   }, [phase, anchor, answers, footprint, activePledges]);
+
+  const handleAuthSuccess = async (user) => {
+    setCurrentUser(user);
+    const token = await user.getIdToken();
+    setIdToken(token);
+    setPhase('LANDING');
+  };
+
+  const handleBypassSuccess = (mockUser) => {
+    setCurrentUser(mockUser);
+    setAuthBypassed(true);
+    setIdToken('mock_bypass_token');
+    setPhase('LANDING');
+  };
+
+  const handleSignOut = async () => {
+    if (window.confirm("Are you sure you want to sign out?")) {
+      // Clear storage
+      try {
+        localStorage.clear();
+      } catch (e) {
+        console.warn(e);
+      }
+
+      // Reset local variables
+      setAnchor(null);
+      setAnswers(null);
+      setFootprint(0);
+      setActivePledges([]);
+
+      if (authBypassed) {
+        setCurrentUser(null);
+        setAuthBypassed(false);
+        setIdToken(null);
+        setPhase('AUTH');
+      } else if (auth) {
+        await auth.signOut();
+      }
+    }
+  };
 
   const handleSelectAnchor = (selectedAnchor) => {
     setAnchor(selectedAnchor);
@@ -86,17 +153,13 @@ export default function App() {
   };
 
   const handleReset = () => {
-    if (window.confirm("Are you sure you want to reset your profile and restart your carbon assessment?")) {
-      // Clear state
-      setPhase('LANDING');
+    if (window.confirm("Are you sure you want to reset your carbon profile? This will not log you out.")) {
       setAnchor(null);
       setAnswers(null);
       setFootprint(0);
       setActivePledges([]);
-      
-      // Clear localStorage
+      setPhase('LANDING');
       try {
-        localStorage.removeItem('echoscope_phase');
         localStorage.removeItem('echoscope_anchor');
         localStorage.removeItem('echoscope_answers');
         localStorage.removeItem('echoscope_footprint');
@@ -105,7 +168,7 @@ export default function App() {
         localStorage.removeItem('echoscope_streak');
         localStorage.removeItem('echoscope_total_days');
       } catch (e) {
-        console.warn("Could not clear localStorage", e);
+        console.warn(e);
       }
     }
   };
@@ -113,6 +176,13 @@ export default function App() {
   // Render sub-page based on active phase
   const renderPhase = () => {
     switch (phase) {
+      case 'AUTH':
+        return (
+          <AuthScreen 
+            onAuthSuccess={handleAuthSuccess} 
+            onBypassSuccess={handleBypassSuccess} 
+          />
+        );
       case 'LANDING':
         return <EcoAnchorSelector onSelect={handleSelectAnchor} />;
       case 'CALCULATING':
@@ -127,7 +197,8 @@ export default function App() {
             answers={answers} 
             activePledgeIds={activePledges} 
             anchor={anchor} 
-            onReset={handleReset} 
+            onReset={handleReset}
+            idToken={idToken}
           />
         );
       default:
@@ -146,8 +217,9 @@ export default function App() {
       <header className="w-full border-b border-white/5 bg-slate-950/60 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <button 
-            onClick={phase !== 'LANDING' ? handleReset : undefined} 
+            onClick={phase !== 'AUTH' && phase !== 'LANDING' ? handleReset : undefined} 
             className="flex items-center gap-2 group cursor-pointer"
+            disabled={phase === 'AUTH'}
           >
             <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white group-hover:scale-105 transition-transform duration-200">
               <Trees className="w-4 h-4" />
@@ -158,27 +230,45 @@ export default function App() {
           </button>
 
           {/* Current location banner */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400">
-            <Compass className="w-3.5 h-3.5 text-blue-400" />
-            <span className="uppercase tracking-widest font-semibold text-[10px]">
-              {phase === 'LANDING' && 'Initialization'}
-              {phase === 'CALCULATING' && 'Assessment'}
-              {phase === 'RESULTS' && 'Reflection'}
-              {phase === 'PLEDGING' && 'Pledge Workshop'}
-              {phase === 'DASHBOARD' && 'Companion Dashboard'}
-            </span>
-          </div>
+          {phase !== 'AUTH' && (
+            <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400">
+              <Compass className="w-3.5 h-3.5 text-blue-400" />
+              <span className="uppercase tracking-widest font-semibold text-[10px]">
+                {phase === 'LANDING' && 'Initialization'}
+                {phase === 'CALCULATING' && 'Assessment'}
+                {phase === 'RESULTS' && 'Reflection'}
+                {phase === 'PLEDGING' && 'Pledge Workshop'}
+                {phase === 'DASHBOARD' && 'Companion Dashboard'}
+              </span>
+            </div>
+          )}
 
-          {/* Info Modal / Trigger link */}
-          <a
-            href="https://www.un.org/en/climatechange/science/causes-effects-climate-change" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Climate Science</span>
-          </a>
+          {/* User profile & sign-out options */}
+          {currentUser ? (
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-300 font-medium">
+                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{currentUser.email}</span>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-white/5 hover:border-red-500/20 text-slate-400 hover:text-red-400 rounded-lg text-xs font-semibold uppercase transition-all cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
+            </div>
+          ) : (
+            <a
+              href="https://www.un.org/en/climatechange/science/causes-effects-climate-change" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Climate Science</span>
+            </a>
+          )}
         </div>
       </header>
 

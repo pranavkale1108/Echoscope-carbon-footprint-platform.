@@ -6,7 +6,7 @@ import { Award, Calendar, CheckSquare, RefreshCw, Share2, Sparkles, Trophy, Down
 
 const BACKEND_URL = 'http://localhost:5000/api';
 
-export default function Dashboard({ answers, activePledgeIds, anchor, onReset }) {
+export default function Dashboard({ answers, activePledgeIds, anchor, onReset, idToken }) {
   // Backend Integration State
   const [dbUser, setDbUser] = useState(null);
   const [customLogs, setCustomLogs] = useState([]);
@@ -56,8 +56,10 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
         setBackendError(null);
         const res = await fetch(`${BACKEND_URL}/users`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: 'EcoGuardian' })
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          }
         });
         if (!res.ok) throw new Error('Failed to synchronize user with backend');
         const data = await res.json();
@@ -67,8 +69,10 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
         setBackendError('Backend Server Offline. AI features running in offline mockup.');
       }
     };
-    initBackendUser();
-  }, []);
+    if (idToken) {
+      initBackendUser();
+    }
+  }, [idToken]);
 
   // Filter pledges to only show adopted ones
   const adoptedPledges = PLEDGES.filter(p => activePledgeIds.includes(p.id));
@@ -133,9 +137,11 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
         // 1. Post to MongoDB + Gemini API
         const res = await fetch(`${BACKEND_URL}/log-action`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
           body: JSON.stringify({
-            userId: dbUser._id || dbUser.id,
             rawInput: customInput
           })
         });

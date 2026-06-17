@@ -1,31 +1,28 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import { GoogleGenAI } from '@google/genai';
 import User from '../models/User.js';
 import ActionLog from '../models/ActionLog.js';
+import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Helper to check for valid Mongo Object ID
-const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
-
 /**
  * @route   POST /api/users
- * @desc    Find or create a user by username
- * @access  Public
+ * @desc    Find or create a user by Firebase UID (requires token verification)
+ * @access  Private
  */
-router.post('/users', async (req, res) => {
+router.post('/users', requireAuth, async (req, res) => {
   try {
-    const { username } = req.body;
-    
-    if (!username) {
-      return res.status(400).json({ error: 'Username is required' });
-    }
+    const { uid, email, name } = req.user;
 
-    let user = await User.findOne({ username });
+    let user = await User.findOne({ firebaseUid: uid });
     
     if (!user) {
-      user = new User({ username });
+      user = new User({
+        firebaseUid: uid,
+        email,
+        username: name
+      });
       await user.save();
       return res.status(201).json(user);
     }
@@ -40,23 +37,20 @@ router.post('/users', async (req, res) => {
 /**
  * @route   POST /api/log-action
  * @desc    Submit raw action text, parse with Gemini API, update User score and save ActionLog
- * @access  Public
+ * @access  Private
  */
-router.post('/log-action', async (req, res) => {
+router.post('/log-action', requireAuth, async (req, res) => {
   try {
-    const { userId, rawInput } = req.body;
+    const { rawInput } = req.body;
+    const { uid } = req.user;
 
     // 1. Validation
-    if (!userId || !rawInput) {
-      return res.status(400).json({ error: 'Both userId and rawInput are required parameters' });
+    if (!rawInput) {
+      return res.status(400).json({ error: 'rawInput is a required parameter' });
     }
 
-    if (!isValidObjectId(userId)) {
-      return res.status(400).json({ error: 'Invalid userId format' });
-    }
-
-    // 2. Locate User
-    const user = await User.findById(userId);
+    // 2. Locate User by Firebase UID
+    const user = await User.findOne({ firebaseUid: uid });
     if (!user) {
       return res.status(404).json({ error: 'User profile not found' });
     }
