@@ -21,7 +21,7 @@ const connectDB = async () => {
     }
   } catch (error) {
     console.error(`[Database Error] MongoDB connection failed: ${error.message}`);
-    process.exit(1); // Exit process with failure
+    // Do not call process.exit(1) so the Express server remains online and returns friendly JSON errors to the user
   }
 };
 
