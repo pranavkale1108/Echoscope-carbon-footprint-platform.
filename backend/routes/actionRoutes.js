@@ -14,6 +14,23 @@ const generateToken = (id, email) => {
   });
 };
 
+// Helper to translate cryptic DB/SSL errors into actionable tips
+const getFriendlyErrorMessage = (error) => {
+  const msg = error.message || '';
+  if (
+    msg.includes('SSL alert number 80') || 
+    msg.includes('ssl3_read_bytes') || 
+    msg.includes('MongooseServerSelectionError') || 
+    msg.includes('MongoNetworkError') ||
+    msg.includes('connection timed out') ||
+    error.name === 'MongooseServerSelectionError' ||
+    error.name === 'MongoNetworkError'
+  ) {
+    return 'Database connection failed. If you are using MongoDB Atlas, please ensure your IP address is whitelisted in MongoDB Atlas Network Access (use 0.0.0.0/0 to allow access from anywhere, which is required for Netlify and other public client connections).';
+  }
+  return msg || 'An unexpected server error occurred';
+};
+
 /**
  * @route   POST /api/auth/register
  * @desc    Register a new user with email and password
@@ -57,7 +74,7 @@ router.post('/auth/register', async (req, res) => {
     }
   } catch (error) {
     console.error(`[Register API Error] ${error.message}`);
-    return res.status(500).json({ error: error.message || 'Failed to register user' });
+    return res.status(500).json({ error: getFriendlyErrorMessage(error) });
   }
 });
 
@@ -93,7 +110,7 @@ router.post('/auth/login', async (req, res) => {
     }
   } catch (error) {
     console.error(`[Login API Error] ${error.message}`);
-    return res.status(500).json({ error: error.message || 'Failed to login' });
+    return res.status(500).json({ error: getFriendlyErrorMessage(error) });
   }
 });
 
@@ -118,7 +135,7 @@ router.get('/auth/me', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error(`[Auth Me API Error] ${error.message}`);
-    return res.status(500).json({ error: 'Failed to fetch user profile' });
+    return res.status(500).json({ error: getFriendlyErrorMessage(error) });
   }
 });
 
@@ -142,7 +159,7 @@ router.get('/logs', requireAuth, async (req, res) => {
     return res.json(formattedLogs);
   } catch (error) {
     console.error(`[GET Logs Error] ${error.message}`);
-    return res.status(500).json({ error: 'Failed to fetch action logs' });
+    return res.status(500).json({ error: getFriendlyErrorMessage(error) });
   }
 });
 
@@ -265,7 +282,7 @@ Rules:
 
   } catch (error) {
     console.error(`[API Log Action Error] ${error.stack || error.message}`);
-    return res.status(500).json({ error: error.message || 'Internal server error while logging action' });
+    return res.status(500).json({ error: getFriendlyErrorMessage(error) });
   }
 });
 
