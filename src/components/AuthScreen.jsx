@@ -88,89 +88,98 @@ export default function AuthScreen({ onAuthSuccess, onBypassSuccess }) {
           </div>
         )}
 
-        {/* Auth form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
-              Email Address
-            </label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
-            />
-          </div>
-
-          <div>
-            <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
-              Secure Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold tracking-wider uppercase text-xs rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98 mt-6"
-          >
-            {loading ? (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : isRegister ? (
-              <>
-                <UserPlus className="w-4 h-4" /> Sign Up
-              </>
-            ) : (
-              <>
-                <LogIn className="w-4 h-4" /> Sign In
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Toggle option */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => setIsRegister(!isRegister)}
-            disabled={loading}
-            className="text-xs text-slate-400 hover:text-white underline font-light transition-colors"
-          >
-            {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
-          </button>
-        </div>
-      </div>
-
-      {/* Bypass / Standalone Section if Firebase variables are missing */}
-      <div className="mt-6 text-center">
+        {/* Auth form or Bypass block based on config */}
         {!isFirebaseConfigured ? (
-          <div className="bg-slate-900/30 border border-white/5 rounded-2xl p-5 space-y-3">
-            <span className="text-[10px] uppercase font-extrabold text-amber-400 tracking-wider flex items-center justify-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Developer Sandboxed Mode
-            </span>
-            <p className="text-slate-400 text-[11px] leading-relaxed font-light">
-              Firebase credentials are not set in your frontend `.env`. You can enter the trial directly in standalone sandbox mode.
-            </p>
+          <div className="space-y-6 pt-2">
+            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-400 p-4 rounded-xl text-xs leading-relaxed font-light">
+              <span className="font-bold flex items-center gap-1.5 mb-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Firebase Credentials Missing
+              </span>
+              Email authentication is unavailable because your client-side environment variables are not configured. You can launch the trial instantly using sandbox bypass credentials.
+            </div>
+
             <button
               onClick={handleBypass}
-              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-500/20 hover:border-amber-500/50 rounded-xl text-xs font-bold tracking-wider uppercase transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold tracking-wider uppercase text-xs rounded-xl shadow-lg shadow-amber-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
               <ShieldCheck className="w-4 h-4" />
-              Bypass and Start Trial
+              Sign In via Sandboxed Bypass
             </button>
           </div>
         ) : (
+          <>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block mb-1.5">
+                  Secure Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold tracking-wider uppercase text-xs rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98 mt-6"
+              >
+                {loading ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : isRegister ? (
+                  <>
+                    <UserPlus className="w-4 h-4" /> Sign Up
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-4 h-4" /> Sign In
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Toggle option */}
+            <div className="text-center mt-6">
+              <button
+                onClick={() => setIsRegister(!isRegister)}
+                disabled={loading}
+                className="text-xs text-slate-400 hover:text-white underline font-light transition-colors"
+              >
+                {isRegister ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Footer Info */}
+      <div className="mt-6 text-center">
+        {isFirebaseConfigured ? (
           <p className="text-[10px] text-slate-500">
             Secured with Google Firebase Authentication services.
+          </p>
+        ) : (
+          <p className="text-[10px] text-slate-500">
+            Running in developer simulation mode.
           </p>
         )}
       </div>
