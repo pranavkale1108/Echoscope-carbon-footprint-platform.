@@ -1,36 +1,148 @@
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
+import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import ActionLog from '../models/ActionLog.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-/**
- * @route   POST /api/users
- * @desc    Find or create a user by Firebase UID (requires token verification)
- * @access  Private
- */
-router.post('/users', requireAuth, async (req, res) => {
-  try {
-    const { uid, email, name } = req.user;
+// Helper to sign JWT
+const generateToken = (id, email) => {
+  return jwt.sign({ id, email }, process.env.JWT_SECRET, {
+    expiresIn: '30d'
+  });
+};
 
-    let user = await User.findOne({ firebaseUid: uid });
-    
-    if (!user) {
-      user = new User({
-        firebaseUid: uid,
-        email,
-        username: name
-      });
-      await user.save();
-      return res.status(201).json(user);
+/**
+ * @route   POST /api/auth/register
+ * @desc    Register a new user with email and password
+ * @access  Public
+ */
+router.post('/auth/register', async (req, res) => {
+  try {
+    const { email, password, username } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Please provide email and password' });
     }
 
-    return res.status(200).json(user);
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ error: 'User already registered with this email' });
+    }
+
+    const user = await User.create({
+      email,
+      password,
+      username: username || email.split('@')[0],
+      worldHealthScore: 50,
+      totalCo2EmittedKg: 0
+    });
+
+    if (user) {
+      const token = generateToken(user._id, user.email);
+      return res.status(201).json({
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+          worldHealthScore: user.worldHealthScore,
+          totalCo2EmittedKg: user.totalCo2EmittedKg
+        }
+      });
+    } else {
+      return res.status(400).json({ error: 'Invalid user data' });
+    }
   } catch (error) {
-    console.error(`[User API Error] ${error.message}`);
-    return res.status(500).json({ error: 'Failed to find or create user profile' });
+    console.error(`[Register API Error] ${error.message}`);
+    return res.status(500).json({ error: error.message || 'Failed to register user' });
+  }
+});
+
+/**
+ * @route   POST /api/auth/login
+ * @desc    Authenticate user & get token
+ * @access  Public
+ */
+router.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Please provide email and password' });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (user && (await user.matchPassword(password))) {
+      const token = generateToken(user._id, user.email);
+      return res.json({
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+          worldHealthScore: user.worldHealthScore,
+          totalCo2EmittedKg: user.totalCo2EmittedKg
+        }
+      });
+    } else {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+  } catch (error) {
+    console.error(`[Login API Error] ${error.message}`);
+    return res.status(500).json({ error: error.message || 'Failed to login' });
+  }
+});
+
+/**
+ * @route   GET /api/auth/me
+ * @desc    Get authenticated user profile
+ * @access  Private
+ */
+router.get('/auth/me', requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User profile not found' });
+    }
+
+    return res.json({
+      id: user._id,
+      email: user.email,
+      username: user.username,
+      worldHealthScore: user.worldHealthScore,
+      totalCo2EmittedKg: user.totalCo2EmittedKg
+    });
+  } catch (error) {
+    console.error(`[Auth Me API Error] ${error.message}`);
+    return res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
+/**
+ * @route   GET /api/logs
+ * @desc    Fetch action logs for the authenticated user
+ * @access  Private
+ */
+router.get('/logs', requireAuth, async (req, res) => {
+  try {
+    const logs = await ActionLog.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    // Convert backend logs into same structure expected by UI
+    const formattedLogs = logs.map(log => ({
+      id: log._id,
+      rawInput: log.rawInput,
+      actionSummary: log.actionSummary,
+      estimatedCo2Kg: log.estimatedCo2Kg,
+      scoreImpact: log.scoreImpact,
+      loggedAt: log.loggedAt || log.createdAt
+    }));
+    return res.json(formattedLogs);
+  } catch (error) {
+    console.error(`[GET Logs Error] ${error.message}`);
+    return res.status(500).json({ error: 'Failed to fetch action logs' });
   }
 });
 
@@ -42,15 +154,15 @@ router.post('/users', requireAuth, async (req, res) => {
 router.post('/log-action', requireAuth, async (req, res) => {
   try {
     const { rawInput } = req.body;
-    const { uid } = req.user;
+    const { id } = req.user;
 
     // 1. Validation
     if (!rawInput) {
       return res.status(400).json({ error: 'rawInput is a required parameter' });
     }
 
-    // 2. Locate User by Firebase UID
-    const user = await User.findOne({ firebaseUid: uid });
+    // 2. Locate User by id
+    const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ error: 'User profile not found' });
     }
@@ -158,3 +270,4 @@ Rules:
 });
 
 export default router;
+

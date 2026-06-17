@@ -1,32 +1,21 @@
-import admin, { isFirebaseAdminConfigured } from '../config/firebaseAdmin.js';
+import jwt from 'jsonwebtoken';
 
 export const requireAuth = async (req, res, next) => {
-  // Bypassed authentication mode if Firebase Admin is not configured
-  if (!isFirebaseAdminConfigured) {
-    req.user = {
-      uid: 'EcoGuardian_Offline_UID',
-      email: 'trial_user@echoscope.earth',
-      name: 'EcoGuardian'
-    };
-    return next();
-  }
-
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Access denied. Missing or malformed Authorization token.' });
     }
 
-    const idToken = authHeader.split('Bearer ')[1];
+    const token = authHeader.split('Bearer ')[1];
     
-    // Verify token using Firebase Admin SDK
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    // Verify token using jsonwebtoken
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Attach decoded token user info to req object
+    // Attach decoded user info to req object
     req.user = {
-      uid: decodedToken.uid,
-      email: decodedToken.email,
-      name: decodedToken.name || decodedToken.email.split('@')[0]
+      id: decoded.id,
+      email: decoded.email
     };
     
     next();
@@ -35,3 +24,4 @@ export const requireAuth = async (req, res, next) => {
     return res.status(401).json({ error: 'Access denied. Invalid or expired authentication token.' });
   }
 };
+

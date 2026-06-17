@@ -6,7 +6,6 @@ import ResultsSection from './components/ResultsSection';
 import PledgeBuilder from './components/PledgeBuilder';
 import Dashboard from './components/Dashboard';
 import { calculateFootprint } from './utils/carbonCalculator';
-import { auth, isFirebaseConfigured } from './config/firebase';
 import { Trees, Compass, HelpCircle, LogOut, User } from 'lucide-react';
 
 export default function App() {
@@ -50,30 +49,57 @@ export default function App() {
     }
   });
 
-  // Listen for Firebase auth state changes
+  // Restore JWT Session on mount
   useEffect(() => {
-    if (isFirebaseConfigured && auth) {
-      const unsubscribe = auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          setCurrentUser(user);
-          const token = await user.getIdToken();
+    const restoreSession = async () => {
+      try {
+        const token = localStorage.getItem('echoscope_token');
+        const cachedUser = localStorage.getItem('echoscope_user');
+        
+        if (token && cachedUser) {
           setIdToken(token);
-          setAuthBypassed(false);
+          const parsedUser = JSON.parse(cachedUser);
+          setCurrentUser(parsedUser);
           
-          // Restore saved phase or go to Landing
-          const savedPhase = localStorage.getItem('echoscope_phase');
-          setPhase(savedPhase && savedPhase !== 'AUTH' ? savedPhase : 'LANDING');
+          if (token === 'mock_bypass_token') {
+            setAuthBypassed(true);
+            const savedPhase = localStorage.getItem('echoscope_phase');
+            setPhase(savedPhase && savedPhase !== 'AUTH' ? savedPhase : 'LANDING');
+            return;
+          }
+
+          // Verify token against backend
+          try {
+            const res = await fetch('http://localhost:5000/api/auth/me', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            if (res.ok) {
+              const freshUser = await res.json();
+              setCurrentUser(freshUser);
+              localStorage.setItem('echoscope_user', JSON.stringify(freshUser));
+              const savedPhase = localStorage.getItem('echoscope_phase');
+              setPhase(savedPhase && savedPhase !== 'AUTH' ? savedPhase : 'LANDING');
+            } else {
+              // Token expired or invalid, sign out silently
+              handleSignOut(true);
+            }
+          } catch (err) {
+            console.warn("Backend offline during session verification, keeping cached session.", err);
+            const savedPhase = localStorage.getItem('echoscope_phase');
+            setPhase(savedPhase && savedPhase !== 'AUTH' ? savedPhase : 'LANDING');
+          }
         } else {
-          setCurrentUser(null);
-          setIdToken(null);
           setPhase('AUTH');
         }
-      });
-      return unsubscribe;
-    } else {
-      // If Firebase is not configured, start at Auth screen for local bypass
-      setPhase('AUTH');
-    }
+      } catch (e) {
+        console.error("Session restoration failed", e);
+        setPhase('AUTH');
+      }
+    };
+
+    restoreSession();
   }, []);
 
   // Sync state changes to LocalStorage
@@ -91,10 +117,15 @@ export default function App() {
     }
   }, [phase, anchor, answers, footprint, activePledges]);
 
-  const handleAuthSuccess = async (user) => {
+  const handleAuthSuccess = (user, token) => {
     setCurrentUser(user);
-    const token = await user.getIdToken();
     setIdToken(token);
+    try {
+      localStorage.setItem('echoscope_token', token);
+      localStorage.setItem('echoscope_user', JSON.stringify(user));
+    } catch (e) {
+      console.warn("Could not save auth details to local storage", e);
+    }
     setPhase('LANDING');
   };
 
@@ -102,11 +133,17 @@ export default function App() {
     setCurrentUser(mockUser);
     setAuthBypassed(true);
     setIdToken('mock_bypass_token');
+    try {
+      localStorage.setItem('echoscope_token', 'mock_bypass_token');
+      localStorage.setItem('echoscope_user', JSON.stringify(mockUser));
+    } catch (e) {
+      console.warn(e);
+    }
     setPhase('LANDING');
   };
 
-  const handleSignOut = async () => {
-    if (window.confirm("Are you sure you want to sign out?")) {
+  const handleSignOut = (force = false) => {
+    if (force || window.confirm("Are you sure you want to sign out?")) {
       // Clear storage
       try {
         localStorage.clear();
@@ -119,15 +156,10 @@ export default function App() {
       setAnswers(null);
       setFootprint(0);
       setActivePledges([]);
-
-      if (authBypassed) {
-        setCurrentUser(null);
-        setAuthBypassed(false);
-        setIdToken(null);
-        setPhase('AUTH');
-      } else if (auth) {
-        await auth.signOut();
-      }
+      setCurrentUser(null);
+      setAuthBypassed(false);
+      setIdToken(null);
+      setPhase('AUTH');
     }
   };
 

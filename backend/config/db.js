@@ -5,10 +5,17 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGO_URI);
     console.log(`[Database] MongoDB Connected: ${conn.connection.host}`);
     
-    // Clean up outdated legacy username index to prevent duplicate keys with Firebase auth
+    // Clean up outdated legacy username and firebaseUid indexes to prevent duplicate keys
     try {
       await conn.connection.collection('users').dropIndex('username_1');
       console.log('[Database] Dropped legacy unique username index.');
+    } catch (err) {
+      // Index didn't exist or already dropped, ignore
+    }
+
+    try {
+      await conn.connection.collection('users').dropIndex('firebaseUid_1');
+      console.log('[Database] Dropped legacy unique firebaseUid index.');
     } catch (err) {
       // Index didn't exist or already dropped, ignore
     }

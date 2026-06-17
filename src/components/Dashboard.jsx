@@ -49,29 +49,47 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
     localStorage.setItem('echoscope_total_days', totalDaysChecked.toString());
   }, [habitCheckedState, streak, totalDaysChecked]);
 
-  // Connect to backend on mount - Find or Create MongoDB User
+  // Connect to backend on mount - Load user profile and past logs
   useEffect(() => {
-    const initBackendUser = async () => {
+    const initBackendData = async () => {
+      if (!idToken || idToken === 'mock_bypass_token') {
+        return; // running in offline simulation mode
+      }
+
       try {
         setBackendError(null);
-        const res = await fetch(`${BACKEND_URL}/users`, {
-          method: 'POST',
+        
+        // 1. Get current user profile
+        const profileRes = await fetch(`${BACKEND_URL}/auth/me`, {
+          method: 'GET',
           headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${idToken}`
           }
         });
-        if (!res.ok) throw new Error('Failed to synchronize user with backend');
-        const data = await res.json();
-        setDbUser(data);
+        if (!profileRes.ok) throw new Error('Failed to fetch user profile');
+        const profileData = await profileRes.json();
+        setDbUser(profileData);
+
+        // 2. Fetch action logs
+        const logsRes = await fetch(`${BACKEND_URL}/logs`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          }
+        });
+        if (logsRes.ok) {
+          const logsData = await logsRes.json();
+          setCustomLogs(logsData);
+        }
       } catch (err) {
         console.warn('Backend offline or database connection failed. Running in standalone offline mode.', err);
         setBackendError('Backend Server Offline. AI features running in offline mockup.');
       }
     };
-    if (idToken) {
-      initBackendUser();
-    }
+
+    initBackendData();
   }, [idToken]);
 
   // Filter pledges to only show adopted ones
