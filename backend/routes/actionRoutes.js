@@ -106,10 +106,10 @@ Rules:
     // 5. Parse Gemini's JSON response
     let parsedResult;
     try {
-      const text = response.text();
+      const text = response.text;
       parsedResult = JSON.parse(text);
     } catch (parseError) {
-      console.error(`[Gemini Parse Error] Failed parsing model text: ${response.text()}`, parseError);
+      console.error(`[Gemini Parse Error] Failed parsing model text: ${response.text}`, parseError);
       return res.status(500).json({ error: 'AI engine returned invalid structured metrics' });
     }
 
