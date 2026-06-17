@@ -2,9 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { PLEDGES } from '../utils/pledges';
 import { calculateFootprint, calculateHealthScore } from '../utils/carbonCalculator';
 import EcosystemVisualizer from './EcosystemVisualizer';
-import { Award, Calendar, CheckSquare, RefreshCw, Share2, Sparkles, Trophy, Download } from 'lucide-react';
+import { Award, Calendar, CheckSquare, RefreshCw, Share2, Sparkles, Trophy, Download, Send, AlertCircle, Shield } from 'lucide-react';
+
+const BACKEND_URL = 'http://localhost:5000/api';
 
 export default function Dashboard({ answers, activePledgeIds, anchor, onReset }) {
+  // Backend Integration State
+  const [dbUser, setDbUser] = useState(null);
+  const [customLogs, setCustomLogs] = useState([]);
+  const [customInput, setCustomInput] = useState('');
+  const [isLoggingAction, setIsLoggingAction] = useState(false);
+  const [backendError, setBackendError] = useState(null);
+
   // Load habit tracking stats from local storage or set defaults
   const [habitCheckedState, setHabitCheckedState] = useState(() => {
     try {
@@ -40,6 +49,27 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
     localStorage.setItem('echoscope_total_days', totalDaysChecked.toString());
   }, [habitCheckedState, streak, totalDaysChecked]);
 
+  // Connect to backend on mount - Find or Create MongoDB User
+  useEffect(() => {
+    const initBackendUser = async () => {
+      try {
+        setBackendError(null);
+        const res = await fetch(`${BACKEND_URL}/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'EcoGuardian' })
+        });
+        if (!res.ok) throw new Error('Failed to synchronize user with backend');
+        const data = await res.json();
+        setDbUser(data);
+      } catch (err) {
+        console.warn('Backend offline or database connection failed. Running in standalone offline mode.', err);
+        setBackendError('Backend Server Offline. AI features running in offline mockup.');
+      }
+    };
+    initBackendUser();
+  }, []);
+
   // Filter pledges to only show adopted ones
   const adoptedPledges = PLEDGES.filter(p => activePledgeIds.includes(p.id));
 
@@ -61,37 +91,91 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
   const isPerfectDay = adoptedPledges.length > 0 && checkedCount === adoptedPledges.length;
   const dailyBoost = isPerfectDay ? 6 : Math.round((checkedCount / (adoptedPledges.length || 1)) * 4);
 
-  const displayScore = Math.min(100, calculateHealthScore(finalFootprint) + dailyBoost);
+  // Compute final displays score factoring in custom logged actions
+  const customScoreModifier = customLogs.reduce((acc, log) => acc + log.scoreImpact, 0);
+  const baseHealthScore = calculateHealthScore(finalFootprint);
+  
+  const displayScore = Math.max(0, Math.min(100, baseHealthScore + dailyBoost + customScoreModifier));
 
   // Calculate cumulative CO2 prevented (kg)
-  // (Pledge annual savings / 365) * days checked
   const co2PreventedDailyKg = (pledgedReduction * 1000) / 365;
-  const totalCo2Prevented = Math.round(co2PreventedDailyKg * totalDaysChecked * 10) / 10;
+  const totalCo2Prevented = Math.round((co2PreventedDailyKg * totalDaysChecked) * 10) / 10;
 
   // Handle checking off a daily habit
   const handleToggleHabit = (id) => {
     setHabitCheckedState(prev => {
       const newState = { ...prev, [id]: !prev[id] };
-      
-      // Calculate new checked count
       const newCheckedCount = Object.values(newState).filter(Boolean).length;
       
-      // If we just checked a habit and completed everything, increase streak and days checked
       if (newState[id]) {
         setTotalDaysChecked(d => d + 1);
         if (newCheckedCount === adoptedPledges.length) {
           setStreak(s => s + 1);
         }
       } else {
-        // If we unchecked and broke a perfect day
         if (Object.values(prev).filter(Boolean).length === adoptedPledges.length) {
           setStreak(s => Math.max(0, s - 1));
         }
         setTotalDaysChecked(d => Math.max(0, d - 1));
       }
-
       return newState;
     });
+  };
+
+  // Log custom actions to backend / Gemini
+  const handleLogCustomAction = async (e) => {
+    e.preventDefault();
+    if (!customInput.trim()) return;
+
+    setIsLoggingAction(true);
+    try {
+      if (dbUser) {
+        // 1. Post to MongoDB + Gemini API
+        const res = await fetch(`${BACKEND_URL}/log-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: dbUser._id || dbUser.id,
+            rawInput: customInput
+          })
+        });
+
+        if (!res.ok) throw new Error('API server returned error');
+        
+        const result = await res.json();
+        if (result.success) {
+          setCustomLogs(prev => [result.actionLog, ...prev]);
+          setDbUser(prev => ({
+            ...prev,
+            worldHealthScore: result.user.worldHealthScore,
+            totalCo2EmittedKg: result.user.totalCo2EmittedKg
+          }));
+          setCustomInput('');
+        }
+      } else {
+        // Offline mockup fallback for testing if server is off
+        setTimeout(() => {
+          const isGreen = customInput.toLowerCase().includes('bike') || customInput.toLowerCase().includes('walk') || customInput.toLowerCase().includes('salad') || customInput.toLowerCase().includes('solar');
+          const mockLog = {
+            id: Date.now().toString(),
+            rawInput: customInput,
+            actionSummary: customInput.split(' ').slice(0, 4).join(' ') + '...',
+            estimatedCo2Kg: isGreen ? 0.05 : 4.5,
+            scoreImpact: isGreen ? 4 : -6,
+            loggedAt: new Date().toISOString()
+          };
+          setCustomLogs(prev => [mockLog, ...prev]);
+          setCustomInput('');
+          setIsLoggingAction(false);
+        }, 1200);
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to log action to backend', err);
+      alert('Could not synchronize custom action with AI service.');
+    } finally {
+      setIsLoggingAction(false);
+    }
   };
 
   // Reset checklist for a new day
@@ -106,19 +190,16 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
     canvas.height = 630;
     const ctx = canvas.getContext('2d');
 
-    // 1. Background Gradient
     const bgGrad = ctx.createLinearGradient(0, 0, 1200, 630);
-    bgGrad.addColorStop(0, '#0f172a'); // slate 900
-    bgGrad.addColorStop(1, '#020617'); // slate 950
+    bgGrad.addColorStop(0, '#0f172a');
+    bgGrad.addColorStop(1, '#020617');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, 1200, 630);
 
-    // 2. Translucent Border
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     ctx.lineWidth = 15;
     ctx.strokeRect(20, 20, 1160, 590);
 
-    // 3. Grid Details
     ctx.strokeStyle = 'rgba(59, 130, 246, 0.05)';
     ctx.lineWidth = 1;
     for (let i = 50; i < 1200; i += 80) {
@@ -134,8 +215,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
       ctx.stroke();
     }
 
-    // 4. Header Titles
-    ctx.fillStyle = '#60a5fa'; // blue-400
+    ctx.fillStyle = '#60a5fa';
     ctx.font = 'bold 20px "Outfit", sans-serif';
     ctx.fillText('ECHOSCOPE ECO-COMMITMENT PLEDGE', 80, 80);
 
@@ -143,13 +223,11 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
     ctx.font = '800 55px "Outfit", sans-serif';
     ctx.fillText('GUARDIAN OF THE BIOSPHERE', 80, 145);
 
-    // 5. Environmental Anchor
-    ctx.fillStyle = '#94a3b8'; // slate-400
+    ctx.fillStyle = '#94a3b8';
     ctx.font = '300 22px "Inter", sans-serif';
     const anchorText = anchor === 'forest' ? 'The Whispering Forest' : anchor === 'glacier' ? 'The Silent Glacier' : 'The Glowing Reef';
     ctx.fillText(`Planetary Anchor: ${anchorText}`, 80, 200);
 
-    // 6. Split Line
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -157,7 +235,6 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
     ctx.lineTo(1120, 240);
     ctx.stroke();
 
-    // 7. Stats Box (Left)
     ctx.fillStyle = 'rgba(30, 41, 59, 0.4)';
     ctx.fillRect(80, 270, 400, 250);
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
@@ -167,7 +244,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
     ctx.font = 'bold 14px "Inter", sans-serif';
     ctx.fillText('RESTORED ENVIRONMENTAL SCORE', 110, 310);
     
-    ctx.fillStyle = '#10b981'; // emerald-500
+    ctx.fillStyle = '#10b981';
     ctx.font = '800 65px "Outfit", sans-serif';
     ctx.fillText(`${displayScore}%`, 110, 385);
 
@@ -176,7 +253,6 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
     ctx.fillText(`CO₂ Footprint: ${finalFootprint} tons / yr`, 110, 440);
     ctx.fillText(`Annual Savings: ${pledgedReduction} tons`, 110, 470);
 
-    // 8. Commitments List (Right)
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 20px "Outfit", sans-serif';
     ctx.fillText('My Active Commitments:', 540, 305);
@@ -188,7 +264,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
       ctx.fillText('• No commitments selected yet.', 540, 350);
     } else {
       adoptedPledges.slice(0, 4).forEach((pledge, index) => {
-        ctx.fillStyle = '#34d399'; // emerald-400 checkmark
+        ctx.fillStyle = '#34d399';
         ctx.fillText('✓', 540, 350 + index * 45);
         ctx.fillStyle = '#e2e8f0';
         ctx.font = 'bold 16px "Inter", sans-serif';
@@ -199,12 +275,10 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
       });
     }
 
-    // 9. Footer Brand Info
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.font = '14px "Inter", sans-serif';
     ctx.fillText('Generate yours at echoscope.earth', 80, 570);
 
-    // Trigger download
     const link = document.createElement('a');
     link.download = `Echoscope_Pledge_${anchor}.png`;
     link.href = canvas.toDataURL('image/png');
@@ -213,6 +287,15 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 animate-fade-in">
+      
+      {/* Backend Status Warning */}
+      {backendError && (
+        <div className="mb-4 bg-amber-500/10 border border-amber-500/20 text-amber-400 p-3 rounded-xl flex items-center gap-2 text-xs">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>{backendError} (Calculations are local but AI tracking is currently offline)</span>
+        </div>
+      )}
+
       {/* Dashboard Top Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-white/5 pb-6">
         <div>
@@ -224,7 +307,6 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
           </h2>
         </div>
 
-        {/* Dashboard Actions */}
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleExportCard}
@@ -244,7 +326,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
         </div>
       </div>
 
-      {/* Main Grid: Visualizer Top/Left, Actions Bottom/Right */}
+      {/* Main Grid: Visualizer Left, Checklists/AI logger Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Span: Dynamic SVG and Core Statistics */}
         <div className="lg:col-span-7 space-y-6">
@@ -252,7 +334,6 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
 
           {/* Stats Cards Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Stat 1: Prevented Carbon */}
             <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between">
               <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase block">
                 Total CO₂ Prevented
@@ -267,7 +348,6 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
               </div>
             </div>
 
-            {/* Stat 2: Active Streak */}
             <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between">
               <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase block">
                 Pledge Streak
@@ -283,7 +363,6 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
               </span>
             </div>
 
-            {/* Stat 3: Adjusted Footprint */}
             <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between">
               <span className="text-[10px] font-extrabold text-slate-400 tracking-wider uppercase block">
                 Target Footprint
@@ -298,10 +377,81 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
               </div>
             </div>
           </div>
+
+          {/* AI Logged Action Feed (Scrolling logs) */}
+          {customLogs.length > 0 && (
+            <div className="glass-panel p-6 rounded-2xl space-y-4">
+              <h4 className="text-sm font-bold text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-blue-400" />
+                AI-Analyzed Action Feed
+              </h4>
+              <div className="space-y-3 max-h-56 overflow-y-auto pr-2">
+                {customLogs.map((log) => (
+                  <div key={log.id || log._id} className="flex justify-between items-center bg-slate-900/40 border border-white/5 p-3 rounded-xl">
+                    <div>
+                      <span className="text-xs font-bold text-white block capitalize">
+                        {log.actionSummary}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block font-light mt-0.5">
+                        "{log.rawInput}"
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-xs font-bold block ${log.scoreImpact >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {log.scoreImpact >= 0 ? `+${log.scoreImpact}` : log.scoreImpact} Score
+                      </span>
+                      <span className="text-[10px] text-slate-400 block font-medium mt-0.5">
+                        {log.estimatedCo2Kg} kg CO₂
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Right Span: Daily Checklist */}
+        {/* Right Span: Daily Checklist and AI Logger */}
         <div className="lg:col-span-5 space-y-6">
+          
+          {/* AI Custom Action Logger */}
+          <div className="glass-panel p-6 rounded-2xl space-y-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-100 font-outfit">
+                Log Custom Action
+              </h3>
+              <span className="text-[10px] font-light text-slate-400 block mt-0.5">
+                Type any activity. Our AI will analyze its carbon footprint and score in real-time.
+              </span>
+            </div>
+
+            <form onSubmit={handleLogCustomAction} className="flex gap-2">
+              <input
+                type="text"
+                placeholder="e.g. I rode a bicycle to work instead of driving..."
+                value={customInput}
+                onChange={(e) => setCustomInput(e.target.value)}
+                disabled={isLoggingAction}
+                className="flex-grow bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={isLoggingAction || !customInput.trim()}
+                className="bg-blue-500 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl px-4 py-2.5 flex items-center justify-center transition-all cursor-pointer"
+              >
+                {isLoggingAction ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </button>
+            </form>
+            <span className="text-[9px] text-slate-500 font-light block leading-normal">
+              Note: Natural language entries (like food choice, shopping, travel) directly alter the health status of your ecosystem.
+            </span>
+          </div>
+
+          {/* Daily Pledges Checklist */}
           <div className="glass-panel p-6 rounded-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div>
@@ -405,3 +555,4 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset })
     </div>
   );
 }
+
