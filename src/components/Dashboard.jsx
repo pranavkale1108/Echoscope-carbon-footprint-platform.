@@ -4,7 +4,7 @@ import { calculateFootprint, calculateHealthScore } from '../utils/carbonCalcula
 import EcosystemVisualizer from './EcosystemVisualizer';
 import { Award, Calendar, CheckSquare, RefreshCw, Share2, Sparkles, Trophy, Download, Send, AlertCircle, Shield } from 'lucide-react';
 
-const BACKEND_URL = '/api';
+const BACKEND_URL = 'https://echoscope-backend.onrender.com/api';
 
 export default function Dashboard({ answers, activePledgeIds, anchor, onReset, idToken }) {
   // Backend Integration State
@@ -514,13 +514,13 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                       key={pledge.id}
                       onClick={() => handleToggleHabit(pledge.id)}
                       className={`w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all ${isChecked
-                          ? 'border-emerald-500 bg-emerald-500/5 text-slate-200'
-                          : 'border-white/5 bg-slate-900/30 hover:bg-slate-900/60 text-slate-300'
+                        ? 'border-emerald-500 bg-emerald-500/5 text-slate-200'
+                        : 'border-white/5 bg-slate-900/30 hover:bg-slate-900/60 text-slate-300'
                         }`}
                     >
                       <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-all ${isChecked
-                          ? 'bg-emerald-500 border-emerald-500 text-white'
-                          : 'border-slate-600'
+                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                        : 'border-slate-600'
                         }`}>
                         {isChecked && <CheckSquare className="w-3.5 h-3.5" />}
                       </div>

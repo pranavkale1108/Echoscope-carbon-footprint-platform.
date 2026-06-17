@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, LogIn, UserPlus, AlertCircle } from 'lucide-react';
 
-const BACKEND_URL = '/api';
+const BACKEND_URL = 'https://echoscope-backend.onrender.com/api';
 
 export default function AuthScreen({ onAuthSuccess, onBypassSuccess }) {
   const [isRegister, setIsRegister] = useState(false);

@@ -70,7 +70,7 @@ export default function App() {
 
           // Verify token against backend
           try {
-            const res = await fetch('/api/auth/me', {
+            const res = await fetch('https://echoscope-backend.onrender.com/api/auth/me', {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
