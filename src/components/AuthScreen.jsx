@@ -31,6 +31,7 @@ export default function AuthScreen({ onAuthSuccess, onBypassSuccess }) {
         ? { email, password, username }
         : { email, password };
 
+      // Explicitly hitting the Render Backend
       const res = await fetch(`${BACKEND_URL}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -42,7 +43,8 @@ export default function AuthScreen({ onAuthSuccess, onBypassSuccess }) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed. Please check your credentials.');
+        // Improved error capture from your Express backend
+        throw new Error(data.message || data.error || 'Authentication failed. Please check your credentials.');
       }
 
       onAuthSuccess(data.user, data.token);
