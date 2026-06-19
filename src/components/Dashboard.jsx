@@ -310,12 +310,12 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 animate-fade-in">
+    <section className="max-w-6xl mx-auto px-4 py-6 animate-fade-in" aria-labelledby="dashboard-heading">
 
       {/* Backend Status Warning */}
       {backendError && (
-        <div className="mb-4 bg-amber-500/10 border border-amber-500/20 text-amber-400 p-3 rounded-xl flex items-center gap-2 text-xs">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+        <div role="alert" className="mb-4 bg-amber-500/10 border border-amber-500/20 text-amber-400 p-3 rounded-xl flex items-center gap-2 text-xs">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
           <span>{backendError} (Calculations are local but AI tracking is currently offline)</span>
         </div>
       )}
@@ -326,25 +326,25 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
           <span className="text-[10px] tracking-widest font-extrabold text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20 uppercase">
             Active Companion
           </span>
-          <h2 className="text-3xl font-extrabold font-outfit text-slate-100 mt-2">
+          <h1 id="dashboard-heading" className="text-3xl font-extrabold font-outfit text-slate-100 mt-2">
             Your Living Mirror
-          </h2>
+          </h1>
         </div>
 
         <div className="flex flex-wrap gap-3">
           <button
             onClick={handleExportCard}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 border border-white/5 hover:bg-slate-800 text-slate-200 hover:text-white rounded-xl text-xs font-bold tracking-wider uppercase transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 border border-white/5 hover:bg-slate-800 text-slate-200 hover:text-white rounded-xl text-xs font-bold tracking-wider uppercase transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
           >
-            <Download className="w-4 h-4 text-blue-400" />
+            <Download className="w-4 h-4 text-blue-400" aria-hidden="true" />
             Download Pledge Card
           </button>
 
           <button
             onClick={onReset}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 border border-white/5 hover:border-red-500/30 text-slate-400 hover:text-red-400 rounded-xl text-xs font-bold tracking-wider uppercase transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-900 border border-white/5 hover:border-red-500/30 text-slate-400 hover:text-red-400 rounded-xl text-xs font-bold tracking-wider uppercase transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4" aria-hidden="true" />
             Recalculate
           </button>
         </div>
@@ -380,7 +380,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                 <span className="text-3xl font-extrabold text-blue-400 font-outfit block">
                   {streak} <span className="text-sm font-medium text-slate-400">Days</span>
                 </span>
-                {streak > 0 && <Trophy className="w-4 h-4 text-yellow-400 animate-bounce" />}
+                {streak > 0 && <Trophy className="w-4 h-4 text-yellow-400 animate-bounce" aria-hidden="true" />}
               </div>
               <span className="text-[10px] text-slate-400 font-light block mt-1 leading-normal">
                 Consecutive days achieving all commitments.
@@ -405,10 +405,10 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
           {/* AI Logged Action Feed (Scrolling logs) */}
           {customLogs.length > 0 && (
             <div className="glass-panel p-6 rounded-2xl space-y-4">
-              <h4 className="text-sm font-bold text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-blue-400" />
+              <h2 className="text-sm font-bold text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-blue-400" aria-hidden="true" />
                 AI-Analyzed Action Feed
-              </h4>
+              </h2>
               <div className="space-y-3 max-h-56 overflow-y-auto pr-2">
                 {customLogs.map((log) => (
                   <div key={log.id || log._id} className="flex justify-between items-center bg-slate-900/40 border border-white/5 p-3 rounded-xl">
@@ -439,11 +439,11 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
         <div className="lg:col-span-5 space-y-6">
 
           {/* AI Custom Action Logger */}
-          <div className="glass-panel p-6 rounded-2xl space-y-4">
+          <section aria-labelledby="custom-action-heading" className="glass-panel p-6 rounded-2xl space-y-4">
             <div>
-              <h3 className="text-lg font-bold text-slate-100 font-outfit">
+              <h2 id="custom-action-heading" className="text-lg font-bold text-slate-100 font-outfit">
                 Log Custom Action
-              </h3>
+              </h2>
               <span className="text-[10px] font-light text-slate-400 block mt-0.5">
                 Type any activity. Our AI will analyze its carbon footprint and score in real-time.
               </span>
@@ -451,37 +451,40 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
 
             <form onSubmit={handleLogCustomAction} className="flex gap-2">
               <input
+                id="custom-action-input"
                 type="text"
                 placeholder="e.g. I rode a bicycle to work instead of driving..."
                 value={customInput}
                 onChange={(e) => setCustomInput(e.target.value)}
                 disabled={isLoggingAction}
-                className="flex-grow bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 disabled:opacity-50"
+                aria-labelledby="custom-action-heading"
+                className="flex-grow bg-slate-950 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={isLoggingAction || !customInput.trim()}
-                className="bg-blue-500 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl px-4 py-2.5 flex items-center justify-center transition-all cursor-pointer"
+                aria-label="Submit custom action"
+                className="bg-blue-500 hover:bg-blue-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl px-4 py-2.5 flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
                 {isLoggingAction ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4" aria-hidden="true" />
                 )}
               </button>
             </form>
-            <span className="text-[9px] text-slate-500 font-light block leading-normal">
+            <span className="text-[9px] text-slate-400 font-light block leading-normal">
               Note: Natural language entries (like food choice, shopping, travel) directly alter the health status of your ecosystem.
             </span>
-          </div>
+          </section>
 
           {/* Daily Pledges Checklist */}
-          <div className="glass-panel p-6 rounded-2xl space-y-6">
+          <section aria-labelledby="daily-checkin-heading" className="glass-panel p-6 rounded-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div>
-                <h3 className="text-lg font-bold text-slate-100 font-outfit">
+                <h2 id="daily-checkin-heading" className="text-lg font-bold text-slate-100 font-outfit">
                   Daily Check-in
-                </h3>
+                </h2>
                 <span className="text-[10px] font-light text-slate-400 block mt-0.5">
                   Log today's actions to nourish your ecosystem.
                 </span>
@@ -489,7 +492,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
 
               <button
                 onClick={handleNewDay}
-                className="text-[10px] font-extrabold uppercase text-slate-400 hover:text-white bg-slate-900 border border-white/5 px-2.5 py-1 rounded"
+                className="text-[10px] font-extrabold uppercase text-slate-400 hover:text-white bg-slate-900 border border-white/5 px-2.5 py-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
                 Reset Checklist
               </button>
@@ -500,7 +503,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                 <p>No pledges adopted.</p>
                 <button
                   onClick={onReset}
-                  className="mt-3 text-xs font-bold text-blue-400 underline uppercase hover:text-blue-300"
+                  className="mt-3 text-xs font-bold text-blue-400 underline uppercase hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
                 >
                   Adopt some now
                 </button>
@@ -513,7 +516,8 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                     <button
                       key={pledge.id}
                       onClick={() => handleToggleHabit(pledge.id)}
-                      className={`w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all ${isChecked
+                      aria-pressed={isChecked}
+                      className={`w-full flex items-start gap-4 p-4 rounded-xl border text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${isChecked
                         ? 'border-emerald-500 bg-emerald-500/5 text-slate-200'
                         : 'border-white/5 bg-slate-900/30 hover:bg-slate-900/60 text-slate-300'
                         }`}
@@ -521,8 +525,8 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                       <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-all ${isChecked
                         ? 'bg-emerald-500 border-emerald-500 text-white'
                         : 'border-slate-600'
-                        }`}>
-                        {isChecked && <CheckSquare className="w-3.5 h-3.5" />}
+                        }`} aria-hidden="true">
+                        {isChecked && <CheckSquare className="w-3.5 h-3.5" aria-hidden="true" />}
                       </div>
 
                       <div>
@@ -546,7 +550,7 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                   <span>Today's Progress</span>
                   <span>{checkedCount} / {adoptedPledges.length} Done</span>
                 </div>
-                <div className="w-full h-2 bg-slate-900/60 rounded-full overflow-hidden border border-white/5">
+                <div className="w-full h-2 bg-slate-900/60 rounded-full overflow-hidden border border-white/5" aria-hidden="true">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
                     style={{ width: `${(checkedCount / adoptedPledges.length) * 100}%` }}
@@ -554,19 +558,19 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
                 </div>
                 {isPerfectDay && (
                   <div className="text-[11px] font-bold text-emerald-400 text-center flex items-center justify-center gap-1 mt-1 animate-pulse">
-                    <Sparkles className="w-3 h-3" /> Perfect Day! Ecosystem Health Boosted (+6%)
+                    <Sparkles className="w-3 h-3" aria-hidden="true" /> Perfect Day! Ecosystem Health Boosted (+6%)
                   </div>
                 )}
               </div>
             )}
-          </div>
+          </section>
 
           {/* Educational Insight Box */}
           <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-5 space-y-3">
-            <h4 className="text-xs font-bold text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-indigo-400" />
+            <h2 className="text-xs font-bold text-slate-200 uppercase tracking-widest flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-indigo-400" aria-hidden="true" />
               Impact Insight
-            </h4>
+            </h2>
             <p className="text-slate-300 text-xs font-light leading-relaxed">
               Every day you check off your commitments, Echoscope updates your cumulative savings.
               Small habits, when maintained, permanently reshape the landscape. Share your Pledge Card with others to inspire collective restoration!
@@ -574,7 +578,6 @@ export default function Dashboard({ answers, activePledgeIds, anchor, onReset, i
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
-

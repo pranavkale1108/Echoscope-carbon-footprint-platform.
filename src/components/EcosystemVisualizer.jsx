@@ -36,7 +36,13 @@ export default function EcosystemVisualizer({ anchor, score, activePledges = [] 
     switch (anchor) {
       case 'forest':
         return (
-          <svg viewBox="0 0 800 450" className="w-full h-full rounded-2xl transition-all duration-700" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            role="img"
+            aria-label={`Planetary mirror visualizer showing ${statusText} for the Whispering Forest anchor with health score ${score}%`}
+            viewBox="0 0 800 450"
+            className="w-full h-full rounded-2xl transition-all duration-700"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs>
               {/* Sky Gradients based on health */}
               <linearGradient id="forestSky" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -252,7 +258,13 @@ export default function EcosystemVisualizer({ anchor, score, activePledges = [] 
 
       case 'glacier':
         return (
-          <svg viewBox="0 0 800 450" className="w-full h-full rounded-2xl transition-all duration-700" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            role="img"
+            aria-label={`Planetary mirror visualizer showing ${statusText} for the Silent Glacier anchor with health score ${score}%`}
+            viewBox="0 0 800 450"
+            className="w-full h-full rounded-2xl transition-all duration-700"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs>
               {/* Sky Gradients */}
               <linearGradient id="glacierSky" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -428,7 +440,13 @@ export default function EcosystemVisualizer({ anchor, score, activePledges = [] 
 
       case 'reef':
         return (
-          <svg viewBox="0 0 800 450" className="w-full h-full rounded-2xl transition-all duration-700" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            role="img"
+            aria-label={`Planetary mirror visualizer showing ${statusText} for the Glowing Reef anchor with health score ${score}%`}
+            viewBox="0 0 800 450"
+            className="w-full h-full rounded-2xl transition-all duration-700"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs>
               {/* Sea Water Gradient based on health */}
               <linearGradient id="seaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -592,9 +610,9 @@ export default function EcosystemVisualizer({ anchor, score, activePledges = [] 
         {/* Health status badge */}
         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider border glass-panel transition-all duration-500 ${statusBg} ${statusColor}`}>
           {score >= 60 ? (
-            <ShieldCheck className="w-3.5 h-3.5" />
+            <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
           ) : (
-            <ShieldAlert className="w-3.5 h-3.5" />
+            <ShieldAlert className="w-3.5 h-3.5" aria-hidden="true" />
           )}
           {statusText}
         </div>

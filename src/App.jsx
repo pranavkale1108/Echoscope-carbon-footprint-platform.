@@ -250,11 +250,12 @@ export default function App() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <button
             onClick={phase !== 'AUTH' && phase !== 'LANDING' ? handleReset : undefined}
-            className="flex items-center gap-2 group cursor-pointer"
+            className="flex items-center gap-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded-lg"
             disabled={phase === 'AUTH'}
+            aria-label={phase !== 'AUTH' && phase !== 'LANDING' ? "Echoscope home - Reset carbon profile" : "Echoscope home"}
           >
             <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white group-hover:scale-105 transition-transform duration-200">
-              <Trees className="w-4 h-4" />
+              <Trees className="w-4 h-4" aria-hidden="true" />
             </div>
             <span className="font-outfit font-extrabold tracking-tight text-white text-base">
               ECHOSCOPE
@@ -263,8 +264,8 @@ export default function App() {
 
           {/* Current location banner */}
           {phase !== 'AUTH' && (
-            <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400">
-              <Compass className="w-3.5 h-3.5 text-blue-400" />
+            <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-slate-400" aria-label="Current application phase">
+              <Compass className="w-3.5 h-3.5 text-blue-400" aria-hidden="true" />
               <span className="uppercase tracking-widest font-semibold text-[10px]">
                 {phase === 'LANDING' && 'Initialization'}
                 {phase === 'CALCULATING' && 'Assessment'}
@@ -284,9 +285,9 @@ export default function App() {
               </div>
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-white/5 hover:border-red-500/20 text-slate-400 hover:text-red-400 rounded-lg text-xs font-semibold uppercase transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 border border-white/5 hover:border-red-500/20 text-slate-400 hover:text-red-400 rounded-lg text-xs font-semibold uppercase transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline">Sign Out</span>
               </button>
             </div>
@@ -295,9 +296,10 @@ export default function App() {
               href="https://www.un.org/en/climatechange/science/causes-effects-climate-change"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
+              aria-label="Climate Science (opens in new tab)"
             >
-              <HelpCircle className="w-3.5 h-3.5" />
+              <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
               <span className="hidden md:inline">Climate Science</span>
             </a>
           )}
@@ -310,7 +312,7 @@ export default function App() {
       </main>
 
       {/* Global Footer */}
-      <footer className="w-full py-6 border-t border-white/5 text-center text-xs text-slate-500 relative z-10 bg-slate-950/40">
+      <footer className="w-full py-6 border-t border-white/5 text-center text-xs text-slate-400 relative z-10 bg-slate-950/40">
         <p className="max-w-xl mx-auto leading-relaxed px-4">
           Echoscope translates individual footprint metrics into immediate ecosystem indicators.
           All calculations are modeled on average annualized global offsets.

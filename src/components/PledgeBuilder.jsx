@@ -40,22 +40,22 @@ export default function PledgeBuilder({ initialAnswers, anchor, onComplete }) {
   const totalSaving = Math.round((initialFootprint - reducedFootprint) * 10) / 10;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 animate-fade-in">
+    <section className="max-w-6xl mx-auto px-4 py-6 animate-fade-in" aria-labelledby="pledge-builder-heading">
       {/* Header */}
       <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
         <div>
           <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest block">
             RESTORATION WORKSHOP
           </span>
-          <h2 className="text-2xl md:text-3xl font-bold font-outfit text-slate-100 mt-1">
+          <h1 id="pledge-builder-heading" className="text-2xl md:text-3xl font-bold font-outfit text-slate-100 mt-1">
             Rebuild Your Environment
-          </h2>
+          </h1>
         </div>
         
         {/* Total saving badge */}
         {totalSaving > 0 && (
           <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase flex items-center gap-1.5 animate-pulse">
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" aria-hidden="true" />
             Saving {totalSaving} Tons CO₂ / Yr
           </div>
         )}
@@ -63,7 +63,7 @@ export default function PledgeBuilder({ initialAnswers, anchor, onComplete }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left: Pledge Selection Stack */}
-        <div className="lg:col-span-7 space-y-4">
+        <section aria-label="Commitment Options" className="lg:col-span-7 space-y-4">
           <p className="text-slate-300 text-sm font-light leading-relaxed mb-4">
             Select the carbon-reduction habits you are willing to adopt. Watch the preview ecosystem to see how your commitment physically restores the biome.
           </p>
@@ -77,7 +77,8 @@ export default function PledgeBuilder({ initialAnswers, anchor, onComplete }) {
                 <button
                   key={pledge.id}
                   onClick={() => handleTogglePledge(pledge.id)}
-                  className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 flex items-start gap-4 relative group overflow-hidden ${
+                  aria-pressed={isActive}
+                  className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 flex items-start gap-4 relative group overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
                     isActive
                       ? 'border-emerald-500 bg-emerald-500/10 text-white'
                       : 'border-white/5 bg-slate-900/40 hover:bg-slate-800/40 hover:border-white/10 text-slate-300'
@@ -87,15 +88,15 @@ export default function PledgeBuilder({ initialAnswers, anchor, onComplete }) {
                   <div className={`p-3 rounded-xl ${
                     isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400 group-hover:text-slate-200'
                   }`}>
-                    <IconComponent className="w-5 h-5" />
+                    <IconComponent className="w-5 h-5" aria-hidden="true" />
                   </div>
 
                   {/* Descriptions */}
                   <div className="flex-grow pr-8">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-bold text-sm tracking-wide group-hover:text-white">
+                      <h2 className="font-bold text-sm tracking-wide group-hover:text-white">
                         {pledge.title}
-                      </h4>
+                      </h2>
                       <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-800 border border-white/5 text-slate-400">
                         -{pledge.co2Reduction} tons CO₂
                       </span>
@@ -122,13 +123,13 @@ export default function PledgeBuilder({ initialAnswers, anchor, onComplete }) {
                       ? 'bg-emerald-500 border-emerald-500 text-white scale-100' 
                       : 'border-slate-700 text-transparent scale-90 group-hover:border-slate-500'
                   }`}>
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3.5 h-3.5" aria-hidden="true" />
                   </div>
                 </button>
               );
             })}
           </div>
-        </div>
+        </section>
 
         {/* Right: Live Restoration Preview */}
         <div className="lg:col-span-5 flex flex-col gap-4">
@@ -175,12 +176,12 @@ export default function PledgeBuilder({ initialAnswers, anchor, onComplete }) {
           {/* Proceed Button */}
           <button
             onClick={() => onComplete(activePledges)}
-            className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold tracking-wider uppercase text-xs rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer scale-100 active:scale-95"
+            className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold tracking-wider uppercase text-xs rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer scale-100 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
           >
             Seal Commitments & Open Dashboard
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -101,20 +101,20 @@ export default function Calculator({ anchor, onComplete }) {
   const tempScore = calculateHealthScore(tempFootprint);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 animate-fade-in">
+    <section className="max-w-6xl mx-auto px-4 py-6 animate-fade-in" aria-labelledby="calculator-heading">
       {/* Upper Navigation Indicator */}
       <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
         <div>
           <span className="text-[10px] tracking-widest font-extrabold text-blue-400 uppercase">
             Step {currentStep + 1} of {QUESTIONS.length}
           </span>
-          <h2 className="text-2xl font-bold font-outfit text-slate-100 mt-1">
+          <h1 id="calculator-heading" className="text-2xl font-bold font-outfit text-slate-100 mt-1">
             Analyzing Habits
-          </h2>
+          </h1>
         </div>
         
         {/* Step dots */}
-        <div className="flex gap-2">
+        <div className="flex gap-2" aria-hidden="true">
           {QUESTIONS.map((_, idx) => (
             <div
               key={idx}
@@ -133,14 +133,14 @@ export default function Calculator({ anchor, onComplete }) {
       {/* Grid: Questionnaire Left, Live Visualizer Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left: Question Box */}
-        <div className="lg:col-span-7 flex flex-col justify-between min-h-[420px] glass-panel p-6 md:p-8 rounded-2xl relative">
+        <section aria-labelledby="question-title" className="lg:col-span-7 flex flex-col justify-between min-h-[420px] glass-panel p-6 md:p-8 rounded-2xl relative">
           <div>
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">
               HABIT PROFILE
             </span>
-            <h3 className="text-2xl md:text-3xl font-bold font-outfit text-slate-100 mb-3 leading-tight">
+            <h2 id="question-title" className="text-2xl md:text-3xl font-bold font-outfit text-slate-100 mb-3 leading-tight">
               {question.title}
-            </h3>
+            </h2>
             <p className="text-slate-300 text-sm font-light leading-relaxed mb-6">
               {question.description}
             </p>
@@ -153,13 +153,14 @@ export default function Calculator({ anchor, onComplete }) {
                   <button
                     key={opt.value}
                     onClick={() => handleSelectOption(opt.value)}
-                    className={`flex items-start text-left p-4 rounded-xl border transition-all duration-300 group relative ${
+                    aria-pressed={isSelected}
+                    className={`flex items-start text-left p-4 rounded-xl border transition-all duration-300 group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
                       isSelected
                         ? 'border-blue-500 bg-blue-500/10 text-slate-100'
                         : 'border-white/5 bg-slate-900/40 hover:bg-slate-800/40 hover:border-white/10 text-slate-300'
                     }`}
                   >
-                    <span className="text-2xl mr-3" role="img" aria-label={opt.label}>
+                    <span className="text-2xl mr-3" aria-hidden="true">
                       {opt.emoji}
                     </span>
                     <div className="flex-grow">
@@ -172,7 +173,7 @@ export default function Calculator({ anchor, onComplete }) {
                     </div>
                     {isSelected && (
                       <div className="absolute top-3 right-3 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                        <Check className="w-2.5 h-2.5 text-white" />
+                        <Check className="w-2.5 h-2.5 text-white" aria-hidden="true" />
                       </div>
                     )}
                   </button>
@@ -186,35 +187,35 @@ export default function Calculator({ anchor, onComplete }) {
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
                 currentStep === 0
                   ? 'text-slate-600 cursor-not-allowed opacity-50'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               Back
             </button>
 
             {currentStep < QUESTIONS.length - 1 ? (
               <button
                 onClick={handleNext}
-                className="flex items-center gap-1.5 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-lg text-xs font-bold tracking-wider uppercase transition-all"
+                className="flex items-center gap-1.5 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-lg text-xs font-bold tracking-wider uppercase transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
                 Skip Question
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </button>
             ) : (
               <button
                 onClick={() => onComplete(answers)}
-                className="flex items-center gap-1.5 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg text-xs font-extrabold tracking-wider uppercase shadow-lg shadow-emerald-500/10 transition-all scale-100 active:scale-95 animate-pulse"
+                className="flex items-center gap-1.5 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg text-xs font-extrabold tracking-wider uppercase shadow-lg shadow-emerald-500/10 transition-all scale-100 active:scale-95 animate-pulse focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className="w-4 h-4" aria-hidden="true" />
                 Reveal My Impact
               </button>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Right: Live Interactive Ecosystem Visualizer */}
         <div className="lg:col-span-5 flex flex-col gap-4">
@@ -254,6 +255,6 @@ export default function Calculator({ anchor, onComplete }) {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

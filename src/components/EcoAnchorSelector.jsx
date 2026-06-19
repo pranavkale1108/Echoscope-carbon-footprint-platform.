@@ -35,10 +35,10 @@ export default function EcoAnchorSelector({ onSelect }) {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 flex flex-col justify-center min-h-[80vh] animate-fade-in">
+    <section className="max-w-4xl mx-auto px-4 py-8 flex flex-col justify-center min-h-[80vh] animate-fade-in" aria-labelledby="anchor-selector-heading">
       {/* Hero Header */}
       <div className="text-center mb-10">
-        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400 mb-4 font-outfit uppercase">
+        <h1 id="anchor-selector-heading" className="text-5xl md:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400 mb-4 font-outfit uppercase">
           Echoscope
         </h1>
         <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
@@ -57,7 +57,9 @@ export default function EcoAnchorSelector({ onSelect }) {
             <button
               key={item.id}
               onClick={() => setSelected(item.id)}
-              className={`flex flex-col text-left p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group glass-panel ${
+              aria-pressed={isSelected}
+              aria-label={`Select ${item.title} anchor`}
+              className={`flex flex-col text-left p-6 rounded-2xl border transition-all duration-300 relative overflow-hidden group glass-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
                 isSelected 
                   ? `ring-2 ring-blue-500 bg-slate-800/80 border-blue-500/60 shadow-lg shadow-blue-500/10 scale-[1.02]`
                   : item.color
@@ -65,7 +67,7 @@ export default function EcoAnchorSelector({ onSelect }) {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-xl bg-slate-900/60 border border-white/5`}>
-                  <IconComponent className="w-6 h-6" />
+                  <IconComponent className="w-6 h-6" aria-hidden="true" />
                 </div>
                 {isSelected && (
                   <span className="text-[10px] tracking-widest font-extrabold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-full border border-blue-500/30 uppercase">
@@ -77,9 +79,9 @@ export default function EcoAnchorSelector({ onSelect }) {
               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
                 {item.subtitle}
               </span>
-              <h3 className="text-xl font-bold text-slate-100 font-outfit mb-3">
+              <h2 className="text-xl font-bold text-slate-100 font-outfit mb-3">
                 {item.title}
-              </h3>
+              </h2>
               <p className="text-slate-300 text-sm font-light leading-relaxed mb-4 flex-grow">
                 {item.description}
               </p>
@@ -99,16 +101,16 @@ export default function EcoAnchorSelector({ onSelect }) {
         <button
           onClick={() => selected && onSelect(selected)}
           disabled={!selected}
-          className={`px-8 py-4 rounded-xl font-bold tracking-wider uppercase text-sm transition-all duration-300 flex items-center gap-2 mx-auto ${
+          className={`px-8 py-4 rounded-xl font-bold tracking-wider uppercase text-sm transition-all duration-300 flex items-center gap-2 mx-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
             selected
               ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-xl shadow-indigo-500/20 cursor-pointer scale-100 active:scale-95'
               : 'bg-slate-800/40 text-slate-500 border border-white/5 cursor-not-allowed'
           }`}
         >
-          <Navigation className="w-4 h-4" />
+          <Navigation className="w-4 h-4" aria-hidden="true" />
           Anchor Your Journey
         </button>
       </div>
-    </div>
+    </section>
   );
 }
